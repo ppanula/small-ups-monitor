@@ -1,6 +1,6 @@
 # Small UPS Monitor
 
-A small, fast Windows monitor for USB UPSes. One ~0.4 MB exe, no installer, no service, no driver, no runtime. It reads the UPS directly through Windows' built-in HID support and shows its state in a compact window and a tray icon.
+A small, fast Windows monitor for USB UPSes. One ~0.5 MB exe, no installer, no service, no driver, no runtime. It reads the UPS directly through Windows' built-in HID support and shows its state in a compact window and a tray icon.
 
 It was written as a lightweight replacement for the APC PowerChute Personal Edition status window, and it also works with other brands' HID UPSes.
 
@@ -11,7 +11,7 @@ It was written as a lightweight replacement for the APC PowerChute Personal Edit
 
 *Left: an APC Back-UPS (APC reader) and an Eaton 3S (generic HID reader), each with its own window. Right: `--demo` during a simulated power failure.*
 
-- **Tiny:** a single exe of about 0.4 MB that uses only system DLLs. It needs about 3 MB of RAM and close to zero CPU.
+- **Tiny:** a single exe of about 0.5 MB that uses only system DLLs. It needs about 3 MB of RAM and close to zero CPU.
 - **Read-only:** it never changes UPS settings and can run next to PowerChute or the vendor's own software.
 - **One window and tray icon per UPS:** several UPSes can be monitored at once.
   - Unplugging a UPS's USB shows it as OFFLINE; after 10 s its window and tray icon close.

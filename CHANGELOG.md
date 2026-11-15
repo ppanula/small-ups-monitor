@@ -4,7 +4,7 @@
 
 First public release.
 
-- Monitors USB HID UPSes on Windows 10/11 from a single ~0.4 MB exe: no installer, service, driver or runtime.
+- Monitors USB HID UPSes on Windows 10/11 from a single ~0.5 MB exe: no installer, service, driver or runtime.
 - **APC reader** for APC units, tested on a Back-UPS BR1500GI. It also reads APC-specific data: sensitivity, status flag and battery dates.
 - **Generic HID reader** for other HID Power Device UPSes, tested on an Eaton 3S 700. It includes per-model quirks for fields a UPS doesn't really measure.
 - **One window and tray icon per UPS.**
