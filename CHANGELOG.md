@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1] - 2026-11-15
+
+- **Version is now visible in the app:**
+  - at the top of the tray menu; click it to open Releases and check for updates;
+  - in **About Small UPS Monitor…** in the window's title-bar menu (click the window icon or press Alt+Space), with the license and project link.
+- **Repository:** added SECURITY.md (private vulnerability reporting), .gitattributes and .editorconfig.
+
 ## [1.0.0] - 2026-11-15
 
 First public release.

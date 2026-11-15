@@ -46,9 +46,10 @@ Windows 10 or 11 (x64). No administrator rights needed.
 | Action | How |
 |---|---|
 | Show / hide a UPS window | Left-click that UPS's tray icon |
-| Menu | Right-click a tray icon: Always on top, Notifications, Start with Windows, Open event log, Create UPS report…, Report a UPS on GitHub…, Exit |
+| Menu | Right-click a tray icon: version (opens Releases), Show / hide, Always on top, Notifications, Start with Windows, Open event log, Create UPS report…, Report a UPS on GitHub…, Exit |
 | Close button | Hides that window to the tray (the app keeps running) |
 | Quit | Tray menu → Exit |
+| Check your version | The top line of the tray menu (click it to open Releases), or the window's title-bar menu → **About Small UPS Monitor…** |
 
 Command line:
 

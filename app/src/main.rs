@@ -44,6 +44,8 @@ use crate::eventlog::EventLog;
 use crate::settings::{DEFAULT_POS, Settings};
 
 pub const APP_NAME: &str = "Small UPS Monitor";
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const REPO_URL: &str = "https://github.com/ppanula/small-ups-monitor";
 
 pub const WM_APP_UPS: u32 = WM_APP + 1;
 pub const WM_APP_TRAY: u32 = WM_APP + 2;
@@ -74,6 +76,9 @@ const CMD_AUTOSTART: usize = 4;
 const CMD_OPEN_LOG: usize = 5;
 const CMD_REPORT: usize = 6;
 const CMD_REPORT_GITHUB: usize = 7;
+const CMD_RELEASES: usize = 8;
+/// Window (title-bar) menu item; system menu IDs must be below 0xF000 and multiples of 16.
+const SC_ABOUT: usize = 0x0010;
 const CMD_EXIT: usize = 9;
 
 /// State of one UPS window.
@@ -422,6 +427,10 @@ fn create_window(device_id: &str) -> HWND {
         let (w, h) = client_to_window(dpi, if device_id.is_empty() { PLACEHOLDER_H } else { CLIENT_H });
         SetWindowPos(hwnd, null_mut(), 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
         style_title_bar(hwnd);
+        // "About" in the window's title-bar menu.
+        let sys = GetSystemMenu(hwnd, 0);
+        AppendMenuW(sys, MF_SEPARATOR, 0, null());
+        AppendMenuW(sys, MF_STRING, SC_ABOUT, wide(&format!("About {APP_NAME}…")).as_ptr());
         if with_shared(|s| s.settings.topmost).unwrap_or(false) {
             set_topmost(hwnd, true);
         }
@@ -571,12 +580,38 @@ fn spawn_device_watcher(controller: HWND) {
         .expect("spawn watcher");
 }
 
+/// About box: version, license, and an offer to open the project page.
+unsafe fn show_about(hwnd: HWND) {
+    let text = format!(
+        "{APP_NAME} {VERSION}\n\nA small Windows monitor for USB HID UPSes.\nMIT License\n\n{REPO_URL}\n\nOpen the project page to check for updates?"
+    );
+    let answer = unsafe {
+        MessageBoxW(
+            hwnd,
+            wide(&text).as_ptr(),
+            wide(&format!("About {APP_NAME}")).as_ptr(),
+            MB_YESNO | MB_ICONINFORMATION,
+        )
+    };
+    if answer == IDYES {
+        report::open(&format!("{REPO_URL}/releases"));
+    }
+}
+
 /// Tray right-click menu. Choices arrive as WM_COMMAND.
 unsafe fn tray_menu(hwnd: HWND) {
     let (topmost, notify) = with_shared(|s| (s.settings.topmost, s.settings.notify)).unwrap_or_default();
     let check = |on: bool| if on { MF_CHECKED } else { MF_UNCHECKED };
     unsafe {
         let menu = CreatePopupMenu();
+        // Name and version on top; clicking it opens the Releases page (to check for updates).
+        AppendMenuW(
+            menu,
+            MF_STRING,
+            CMD_RELEASES,
+            wide(&format!("{APP_NAME} {VERSION}")).as_ptr(),
+        );
+        AppendMenuW(menu, MF_SEPARATOR, 0, null());
         AppendMenuW(menu, MF_STRING, CMD_SHOW, wide("Show / hide").as_ptr());
         AppendMenuW(menu, MF_SEPARATOR, 0, null());
         AppendMenuW(
@@ -666,6 +701,7 @@ unsafe fn command(hwnd: HWND, id: usize) {
             }
             CMD_REPORT => report::create_and_open(),
             CMD_REPORT_GITHUB => report::open(report::ISSUE_URL),
+            CMD_RELEASES => report::open(&format!("{REPO_URL}/releases")),
             CMD_EXIT => {
                 with_shared(|s| s.exiting = true);
                 for w in all_windows() {
@@ -705,6 +741,10 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM) 
             }
             WM_COMMAND => {
                 command(hwnd, wp & 0xFFFF);
+                0
+            }
+            WM_SYSCOMMAND if wp & 0xFFF0 == SC_ABOUT => {
+                show_about(hwnd);
                 0
             }
             WM_CLOSE => {
