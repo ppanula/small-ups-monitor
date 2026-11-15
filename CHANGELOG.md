@@ -1,0 +1,17 @@
+# Changelog
+
+## [1.0.0] - 2026-11-15
+
+First public release.
+
+- Monitors USB HID UPSes on Windows 10/11 from a single ~0.4 MB exe: no installer, service, driver or runtime.
+- **APC reader** for APC units, tested on a Back-UPS BR1500GI. It also reads APC-specific data: sensitivity, status flag and battery dates.
+- **Generic HID reader** for other HID Power Device UPSes, tested on an Eaton 3S 700. It includes per-model quirks for fields a UPS doesn't really measure.
+- **One window and tray icon per UPS.**
+  - A UPS window closes 10 s after its USB is unplugged, and pops up when the UPS is plugged in.
+  - "Please connect UPS" shows when no UPS is connected.
+- **Shows:** status, input voltage and transfer range, load with estimated W/VA, charge, runtime, battery voltage, 10-minute charts with gaps for missing data, energy rate, and the last outage with its duration.
+- **Notifications** for power failure, power restored, low battery, shutdown imminent, battery needing replacement, and disconnects.
+- **Data:** a CSV event log, window positions per UPS, and Start with Windows.
+- **UPS reports:** **Create UPS report…** (tray menu) or `--report` writes a privacy-safe report of what the UPS sends; **Report a UPS on GitHub…** opens the issue form.
+- **Tools:** `--demo` mode, plus the `hiddump`, `watch` and `rawlog` diagnostic examples.

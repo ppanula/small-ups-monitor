@@ -1,0 +1,19 @@
+[package]
+name = "ups-core"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[features]
+win32 = ["dep:windows-sys"]
+
+[dependencies.windows-sys]
+workspace = true
+optional = true
+features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_Storage_FileSystem",
+    "Win32_Devices_HumanInterfaceDevice",
+    "Win32_Devices_DeviceAndDriverInstallation",
+]

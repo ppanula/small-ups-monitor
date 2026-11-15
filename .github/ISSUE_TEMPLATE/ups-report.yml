@@ -1,0 +1,63 @@
+name: UPS report
+description: Add support for your USB UPS, or report wrong or missing values
+title: "UPS report: <brand> <model>"
+labels: ["ups-report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping add UPS support! Step-by-step instructions: [Adding your UPS](https://github.com/ppanula/small-ups-monitor/blob/main/docs/ADDING-A-UPS.md).
+
+        In short: connect the UPS by USB, right-click a Small UPS Monitor tray icon → **Create UPS report…**, and paste the report below. The report hides your UPS's serial number and contains no personal data.
+
+  - type: input
+    id: model
+    attributes:
+      label: UPS brand and model
+      description: As printed on the UPS, e.g. "CyberPower CP1500EPFCLCD".
+    validations:
+      required: true
+
+  - type: dropdown
+    id: result
+    attributes:
+      label: How does Small UPS Monitor handle it?
+      options:
+        - Everything looks right
+        - Some values are wrong or missing
+        - The UPS is not detected
+    validations:
+      required: true
+
+  - type: textarea
+    id: compare
+    attributes:
+      label: What does the UPS itself show?
+      description: |
+        Values from the UPS display or the vendor's own software, so the report can be checked:
+        load (% or W), battery charge, runtime, input voltage. Mention anything that differs from Small UPS Monitor.
+      placeholder: |
+        UPS display: load 23 %, input 231 V, battery 100 %
+        Vendor software: runtime 42 min
+
+  - type: checkboxes
+    id: battery-test
+    attributes:
+      label: On-battery test (optional, very helpful)
+      options:
+        - label: I unplugged the UPS's power cord for about 20 seconds (with a non-critical load), and Small UPS Monitor showed ON BATTERY.
+        - label: I attached a second report created while the UPS was on battery.
+
+  - type: textarea
+    id: report
+    attributes:
+      label: UPS report
+      description: Paste the whole report file here (or drag the .txt file in).
+    validations:
+      required: true
+
+  - type: input
+    id: windows
+    attributes:
+      label: Anything else?
+      description: Optional, e.g. the UPS is connected through a USB hub, or other UPS software is installed.

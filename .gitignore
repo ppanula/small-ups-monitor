@@ -1,0 +1,10 @@
+# Rust build output
+target/
+
+# Editor / OS clutter
+.vs/
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+desktop.ini
