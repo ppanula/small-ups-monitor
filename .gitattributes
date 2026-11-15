@@ -1,0 +1,16 @@
+# Text files: LF in the repository and in working copies, whatever core.autocrlf says.
+* text=auto eol=lf
+
+# Windows scripts get CRLF in working copies.
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary files: never convert or diff as text.
+*.png binary
+*.ico binary
+*.exe binary
+
+# Generated files and recorded device output: keep them out of GitHub's language stats.
+Cargo.lock linguist-generated=true
+docs/dumps/** linguist-documentation=true
