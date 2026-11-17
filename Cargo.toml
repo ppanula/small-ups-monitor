@@ -9,8 +9,10 @@ license = "MIT"
 repository = "https://github.com/ppanula/small-ups-monitor"
 publish = false
 
-[workspace.dependencies]
-windows-sys = "0.61"
+# `windows-sys` is target-gated in each crate rather than shared here: the
+# Windows 7 target (x86_64-win7-windows-msvc) needs 0.60 (the last version that
+# links only Win7-safe DLLs, microsoft/windows-rs#3808), while modern targets
+# use the latest 0.61. See core/Cargo.toml and app/Cargo.toml.
 
 [profile.release]
 opt-level = "z"

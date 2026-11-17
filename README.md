@@ -94,6 +94,18 @@ cargo test --all-features
 
 The exe is `target\release\small-ups-monitor.exe`. The C runtime is linked statically, so no Visual C++ Redistributable is needed.
 
+### Build for Windows 7 / Server 2008 R2
+
+The normal build targets Windows 10+. To build an exe that runs on Windows 7 or
+Windows Server 2008 R2, use the Win7 target (see
+[docs/BUILDING-WINDOWS-7.md](docs/BUILDING-WINDOWS-7.md)):
+
+```
+rustup toolchain install nightly
+rustup component add rust-src --toolchain nightly
+cargo +nightly build -Z build-std --target x86_64-win7-windows-msvc --release
+```
+
 ### Diagnostics
 
 ```

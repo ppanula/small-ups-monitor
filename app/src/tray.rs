@@ -9,19 +9,33 @@ use windows_sys::Win32::Graphics::Gdi::{
     BI_RGB, BITMAPINFO, BITMAPINFOHEADER, CreateBitmap, CreateDIBSection, DIB_RGB_COLORS, DeleteObject, GetDC,
     ReleaseDC,
 };
-use windows_sys::Win32::UI::HiDpi::GetSystemMetricsForDpi;
 use windows_sys::Win32::UI::Shell::{
     NIF_ICON, NIF_INFO, NIF_MESSAGE, NIF_SHOWTIP, NIF_TIP, NIIF_INFO, NIIF_WARNING, NIM_ADD, NIM_DELETE, NIM_MODIFY,
     NOTIFYICONDATAW, Shell_NotifyIconW,
 };
 use windows_sys::Win32::UI::WindowsAndMessaging::{
-    CreateIconIndirect, DestroyIcon, HICON, ICON_BIG, ICON_SMALL, ICONINFO, SM_CXICON, SM_CXSMICON, SendMessageW,
-    WM_SETICON,
+    CreateIconIndirect, DestroyIcon, GetSystemMetrics, HICON, ICON_BIG, ICON_SMALL, ICONINFO, SM_CXICON, SM_CXSMICON,
+    SendMessageW, WM_SETICON,
 };
 
 use crate::WM_APP_TRAY;
 
 type Key = (UpsState, bool, u8);
+
+/// `GetSystemMetrics` for a specific DPI, falling back to the process-wide
+/// `GetSystemMetrics` on Windows 7 / Server 2008 R2 (where the exe is
+/// system-DPI aware, so the returned size is already scaled).
+fn system_metrics(index: i32, dpi: u32) -> i32 {
+    if let Some(proc) = crate::user32_proc(b"GetSystemMetricsForDpi") {
+        let get = unsafe {
+            std::mem::transmute::<unsafe extern "system" fn() -> isize, unsafe extern "system" fn(i32, u32) -> i32>(
+                proc,
+            )
+        };
+        return unsafe { get(index, dpi) };
+    }
+    unsafe { GetSystemMetrics(index) }
+}
 
 pub struct Tray {
     hwnd: HWND,
@@ -105,8 +119,8 @@ impl Tray {
 
     fn set_icons(&mut self, dpi: u32, key: Key) {
         let (state, connected, charge) = key;
-        let sm = unsafe { GetSystemMetricsForDpi(SM_CXSMICON, dpi) }.max(16) as u32;
-        let lg = unsafe { GetSystemMetricsForDpi(SM_CXICON, dpi) }.max(32) as u32;
+        let sm = system_metrics(SM_CXSMICON, dpi).max(16) as u32;
+        let lg = system_metrics(SM_CXICON, dpi).max(32) as u32;
         let small = make_icon(sm, state, connected, Some(charge));
         let big = make_icon(lg, state, connected, Some(charge));
         unsafe {

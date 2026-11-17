@@ -15,8 +15,25 @@ path = "src/main.rs"
 [dependencies]
 ups-core = { path = "../core", features = ["win32"] }
 
-[dependencies.windows-sys]
-workspace = true
+# The Windows 7 target needs windows-sys 0.60 (the last version that links only
+# Win7-safe DLLs); everything else uses the latest 0.61.
+[target.'cfg(target_vendor = "win7")'.dependencies.windows-sys]
+version = "0.60"
+features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+    "Win32_Graphics_Dwm",
+    "Win32_System_LibraryLoader",
+    "Win32_System_Registry",
+    "Win32_System_SystemInformation",
+    "Win32_System_Threading",
+    "Win32_UI_HiDpi",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+]
+
+[target.'cfg(not(target_vendor = "win7"))'.dependencies.windows-sys]
+version = "0.61"
 features = [
     "Win32_Foundation",
     "Win32_Graphics_Gdi",

@@ -1,3 +1,7 @@
 # Static C runtime: the exe needs no Visual C++ Redistributable.
 [target.x86_64-pc-windows-msvc]
 rustflags = ["-C", "target-feature=+crt-static"]
+
+# Windows 7 / Server 2008 R2 build (Tier 3 target, built with -Zbuild-std).
+[target.x86_64-win7-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]

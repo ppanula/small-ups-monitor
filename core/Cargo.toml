@@ -7,13 +7,22 @@ publish.workspace = true
 [features]
 win32 = ["dep:windows-sys"]
 
-[dependencies.windows-sys]
-workspace = true
-optional = true
-features = [
+# The Windows 7 target needs windows-sys 0.60 (the last version that links only
+# Win7-safe DLLs); everything else uses the latest 0.61.
+[target.'cfg(target_vendor = "win7")'.dependencies]
+windows-sys = { version = "0.60", optional = true, features = [
     "Win32_Foundation",
     "Win32_Security",
     "Win32_Storage_FileSystem",
     "Win32_Devices_HumanInterfaceDevice",
     "Win32_Devices_DeviceAndDriverInstallation",
-]
+] }
+
+[target.'cfg(not(target_vendor = "win7"))'.dependencies]
+windows-sys = { version = "0.61", optional = true, features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_Storage_FileSystem",
+    "Win32_Devices_HumanInterfaceDevice",
+    "Win32_Devices_DeviceAndDriverInstallation",
+] }

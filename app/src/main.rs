@@ -30,13 +30,12 @@ use ups_core::hid_win32::{UpsHid, ups_interfaces};
 use ups_core::{DeviceInfo, Event, History, Snapshot, UpsState, fmt_runtime, poller};
 use windows_sys::Win32::Foundation::{ERROR_ALREADY_EXISTS, GetLastError, HWND, LPARAM, LRESULT, POINT, RECT, WPARAM};
 use windows_sys::Win32::Graphics::Dwm::DwmSetWindowAttribute;
-use windows_sys::Win32::Graphics::Gdi::{InvalidateRect, MONITOR_DEFAULTTONULL, MonitorFromPoint, ValidateRect};
-use windows_sys::Win32::System::LibraryLoader::GetModuleHandleW;
-use windows_sys::Win32::System::Threading::CreateMutexW;
-use windows_sys::Win32::UI::HiDpi::{
-    AdjustWindowRectExForDpi, DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, GetDpiForWindow,
-    SetProcessDpiAwarenessContext,
+use windows_sys::Win32::Graphics::Gdi::{
+    GetDC, GetDeviceCaps, InvalidateRect, LOGPIXELSX, MONITOR_DEFAULTTONULL, MonitorFromPoint, ReleaseDC, ValidateRect,
 };
+use windows_sys::Win32::System::LibraryLoader::{GetModuleHandleW, GetProcAddress, LoadLibraryW};
+use windows_sys::Win32::System::Threading::CreateMutexW;
+use windows_sys::Win32::UI::HiDpi::{DPI_AWARENESS_CONTEXT, DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2};
 use windows_sys::Win32::UI::Shell::ShellExecuteW;
 use windows_sys::Win32::UI::WindowsAndMessaging::*;
 
@@ -349,8 +348,80 @@ fn client_to_window(dpi: u32, client_h: i32) -> (i32, i32) {
         right: CLIENT_W * dpi as i32 / 96,
         bottom: client_h * dpi as i32 / 96,
     };
-    unsafe { AdjustWindowRectExForDpi(&mut rc, STYLE, 0, 0, dpi) };
+    adjust_window_rect(&mut rc, STYLE, dpi);
     (rc.right - rc.left, rc.bottom - rc.top)
+}
+
+/// Load a function from user32.dll, or `None` if it isn't exported. Used for the
+/// Windows 10 HiDPI functions so the exe still starts on Windows 7 / Server
+/// 2008 R2, where those functions don't exist.
+pub(crate) fn user32_proc(name: &[u8]) -> Option<unsafe extern "system" fn() -> isize> {
+    let lib = wide("user32.dll");
+    unsafe {
+        let module = LoadLibraryW(lib.as_ptr());
+        if module.is_null() {
+            return None;
+        }
+        GetProcAddress(module, name.as_ptr())
+    }
+}
+
+/// Per-monitor DPI for `hwnd`; falls back to the system DPI on Windows 7.
+fn window_dpi(hwnd: HWND) -> u32 {
+    if let Some(proc) = user32_proc(b"GetDpiForWindow") {
+        let get_dpi = unsafe {
+            std::mem::transmute::<unsafe extern "system" fn() -> isize, unsafe extern "system" fn(HWND) -> u32>(proc)
+        };
+        let dpi = unsafe { get_dpi(hwnd) };
+        if dpi != 0 {
+            return dpi;
+        }
+    }
+    system_dpi()
+}
+
+fn system_dpi() -> u32 {
+    unsafe {
+        let dc = GetDC(null_mut());
+        if dc.is_null() {
+            return 96;
+        }
+        let dpi = GetDeviceCaps(dc, LOGPIXELSX as i32);
+        ReleaseDC(null_mut(), dc);
+        if dpi > 0 { dpi as u32 } else { 96 }
+    }
+}
+
+/// Make the process DPI-aware: per-monitor v2 on Windows 10, system DPI on
+/// Windows 7 / Server 2008 R2.
+fn set_process_dpi_aware() {
+    if let Some(proc) = user32_proc(b"SetProcessDpiAwarenessContext") {
+        let set = unsafe {
+            std::mem::transmute::<
+                unsafe extern "system" fn() -> isize,
+                unsafe extern "system" fn(DPI_AWARENESS_CONTEXT) -> i32,
+            >(proc)
+        };
+        unsafe { set(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) };
+    } else {
+        unsafe { SetProcessDPIAware() };
+    }
+}
+
+/// Like `AdjustWindowRectExForDpi`, but falls back to `AdjustWindowRectEx` on
+/// Windows 7 (system-DPI aware, so the frame is already scaled correctly).
+fn adjust_window_rect(rc: &mut RECT, style: u32, dpi: u32) {
+    if let Some(proc) = user32_proc(b"AdjustWindowRectExForDpi") {
+        let adjust = unsafe {
+            std::mem::transmute::<
+                unsafe extern "system" fn() -> isize,
+                unsafe extern "system" fn(*mut RECT, u32, i32, u32, u32) -> i32,
+            >(proc)
+        };
+        unsafe { adjust(rc, style, 0, 0, dpi) };
+    } else {
+        unsafe { AdjustWindowRectEx(rc, style, 0, 0) };
+    }
 }
 
 unsafe fn style_title_bar(hwnd: HWND) {
@@ -423,7 +494,7 @@ fn create_window(device_id: &str) -> HWND {
             hinst,
             null(),
         );
-        let dpi = GetDpiForWindow(hwnd);
+        let dpi = window_dpi(hwnd);
         let (w, h) = client_to_window(dpi, if device_id.is_empty() { PLACEHOLDER_H } else { CLIENT_H });
         SetWindowPos(hwnd, null_mut(), 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
         style_title_bar(hwnd);
@@ -491,7 +562,7 @@ fn bind_device(id: &str, at_startup: bool) {
         if let Some((x, y)) = saved_position(id) {
             unsafe { SetWindowPos(hwnd, null_mut(), x, y, 0, 0, flags | SWP_NOSIZE) };
         }
-        let (w, hgt) = client_to_window(unsafe { GetDpiForWindow(hwnd) }, CLIENT_H);
+        let (w, hgt) = client_to_window(window_dpi(hwnd), CLIENT_H);
         unsafe { SetWindowPos(hwnd, null_mut(), 0, 0, w, hgt, flags | SWP_NOMOVE) };
     }
     unsafe {
@@ -847,7 +918,7 @@ fn main() {
             return;
         }
 
-        SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+        set_process_dpi_aware();
         settings::migrate_legacy_dir();
         TASKBAR_CREATED.set(RegisterWindowMessageW(wide("TaskbarCreated").as_ptr()));
         if !demo {
