@@ -54,6 +54,23 @@ Three things make the Win7 build possible; all are already set up in this repo:
    standard library avoids Windows 8/10-only imports such as
    `GetSystemTimePreciseAsFileTime` and `WaitOnAddress`.
 
+## Import check (CI)
+
+An exe that imports a function newer than Windows 7 still compiles. Windows 7 then refuses to start it ("entry point not found"). To catch that, CI and the release workflow run:
+
+```powershell
+./tools/check-win7-imports.ps1 target/x86_64-win7-windows-msvc/release/small-ups-monitor.exe
+```
+
+It compares the exe's imports with [`tools/win7-imports.txt`](../tools/win7-imports.txt), a list of `DLL!Function` entries that have been checked to exist on Windows 7 SP1 / Server 2008 R2. It also fails on DLLs that Windows 7 doesn't have.
+
+When it fails because of a new import:
+1. **Look the function up** in Microsoft's documentation. Its "Minimum supported client" must be Windows 7 or older (or Windows Server 2008 R2).
+2. **If it qualifies**, add it to `tools/win7-imports.txt`, or run the script with `-Update` and review the diff.
+3. **Otherwise**, load the function at runtime with `GetProcAddress` and a fallback, like the DPI functions above.
+
+The check can also fail after a nightly Rust update changes what the standard library imports. That's worth knowing too.
+
 ## Caveats
 
 - Windows 7 and Server 2008 R2 are out of support; test on a VM or spare

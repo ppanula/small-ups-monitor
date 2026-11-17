@@ -36,3 +36,31 @@ jobs:
         with:
           name: small-ups-monitor
           path: target/release/small-ups-monitor.exe
+
+  win7:
+    name: Windows 7 build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # x86_64-win7-windows-msvc is a Tier 3 target: nightly + rust-src to rebuild std.
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rust-src
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: win7
+
+      - name: Build (Windows 7 / Server 2008 R2)
+        run: cargo +nightly build -Z build-std --target x86_64-win7-windows-msvc --release
+
+      # A newer-than-Win7 import still builds, but the exe would not start on Windows 7.
+      - name: Check imports exist on Windows 7
+        shell: pwsh
+        run: ./tools/check-win7-imports.ps1 target/x86_64-win7-windows-msvc/release/small-ups-monitor.exe
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: small-ups-monitor-win7
+          path: target/x86_64-win7-windows-msvc/release/small-ups-monitor.exe

@@ -37,6 +37,10 @@ jobs:
       - name: Build (Windows 7 / Server 2008 R2)
         run: cargo +nightly build -Z build-std --target x86_64-win7-windows-msvc --release
 
+      - name: Check imports exist on Windows 7
+        shell: pwsh
+        run: ./tools/check-win7-imports.ps1 target/x86_64-win7-windows-msvc/release/small-ups-monitor.exe
+
       - name: Package
         shell: pwsh
         run: |
