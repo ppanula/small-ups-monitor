@@ -41,6 +41,8 @@ The generic reader finds fields by their standard names in the device's own desc
 
 Windows 10 or 11 (x64). No administrator rights needed.
 
+**Windows 7 / Server 2008 R2?** Download `small-ups-monitor-win7.exe` instead — the same app, built for NT 6.1.
+
 ## Use
 
 | Action | How |
