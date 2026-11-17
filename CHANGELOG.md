@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2] - 2026-11-17
+
+- **Windows 7 / Server 2008 R2 support:** a second exe built with the
+  `x86_64-win7-windows-msvc` target now runs on Windows 7 and Windows Server
+  2008 R2 (as well as Windows 10/11), with no Visual C++ Redistributable or
+  other runtime. The normal build is unchanged and still targets Windows 10/11.
+
 ## [1.0.1] - 2026-11-15
 
 - **Version is now visible in the app:**
